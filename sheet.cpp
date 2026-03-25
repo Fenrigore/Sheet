@@ -18,14 +18,20 @@ void Sheet::SetCell(Position pos, std::string text) {
 const CellInterface* Sheet::GetCell(Position pos) const {
     if (!pos.IsValid()) throw InvalidPositionException("Invalid position");
     auto it = cells_.find(pos);
-    if (it != cells_.end()) return it->second.get();
+    // Проверяем, существует ли ячейка и не пустая ли она
+    if (it != cells_.end() && !it->second->GetText().empty()) {
+        return it->second.get();
+    }
     return nullptr;
 }
 
 CellInterface* Sheet::GetCell(Position pos) {
     if (!pos.IsValid()) throw InvalidPositionException("Invalid position");
     auto it = cells_.find(pos);
-    if (it != cells_.end()) return it->second.get();
+    // Аналогичная проверка
+    if (it != cells_.end() && !it->second->GetText().empty()) {
+        return it->second.get();
+    }
     return nullptr;
 }
 

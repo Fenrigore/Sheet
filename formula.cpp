@@ -28,11 +28,11 @@ public:
 
     Value Evaluate(const SheetInterface& sheet) const override {
         try {
-            // Передаем лямбду в AST
-            return ast_.Execute([&sheet](Position pos) -> double {
+            // Вычисляем результат как double
+            double result = ast_.Execute([&sheet](Position pos) -> double {
                 if (!pos.IsValid()) throw FormulaError(FormulaError::Category::Ref);
                 const auto* cell = sheet.GetCell(pos);
-                if (!cell) return 0.0; // Пустая ячейка равна нулю
+                if (!cell) return 0.0;
 
                 auto val = cell->GetValue();
                 if (std::holds_alternative<double>(val)) {
@@ -43,7 +43,6 @@ public:
                     if (str.empty()) return 0.0;
                     double res = 0;
                     std::istringstream in(str);
-                    // Строгий парсинг числа
                     if (!(in >> res >> std::ws) || !in.eof()) {
                         throw FormulaError(FormulaError::Category::Value);
                     }
@@ -53,6 +52,13 @@ public:
                     throw std::get<FormulaError>(val);
                 }
                 });
+
+            // Проверяем результат на inf и NaN
+            if (!std::isfinite(result)) {
+                return FormulaError(FormulaError::Category::Arithmetic);
+            }
+
+            return result;
         }
         catch (const FormulaError& err) {
             return err;

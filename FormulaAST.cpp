@@ -203,16 +203,18 @@ namespace ASTImpl {
 
         class CellExpr final : public Expr {
         public:
+            // Принимаем указатель (как это делает автогенерированный listener),
+            // но сохраняем копию объекта Position
             explicit CellExpr(const Position* cell)
-                : cell_(cell) {
+                : cell_(*cell) { // Разыменовываем указатель здесь
             }
 
             void Print(std::ostream& out) const override {
-                if (!cell_->IsValid()) {
+                if (!cell_.IsValid()) {
                     out << FormulaError::Category::Ref;
                 }
                 else {
-                    out << cell_->ToString();
+                    out << cell_.ToString();
                 }
             }
 
@@ -225,11 +227,11 @@ namespace ASTImpl {
             }
 
             double Evaluate(const std::function<double(Position)>& args) const override {
-                return args(*cell_);
+                return args(cell_); // Передаем копию Position в лямбду
             }
 
         private:
-            const Position* cell_;
+            Position cell_; // Храним по значению, чтобы избежать dangling pointer
         };
 
         class NumberExpr final : public Expr {
