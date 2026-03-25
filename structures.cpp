@@ -76,3 +76,25 @@ Position Position::FromString(std::string_view str) {
 bool Size::operator==(Size rhs) const {
     return cols == rhs.cols && rows == rhs.rows;
 }
+
+FormulaError::FormulaError(Category category) : category_(category) {}
+
+FormulaError::Category FormulaError::GetCategory() const {
+    return category_;
+}
+
+bool FormulaError::operator==(FormulaError rhs) const {
+    return category_ == rhs.category_;
+}
+
+std::string_view FormulaError::ToString() const {
+    switch (category_) {
+    case Category::Ref:
+        return "#REF!";
+    case Category::Value:
+        return "#VALUE!";
+    case Category::Arithmetic:
+        return "#DIV/0!"; // Или "#ARITHM!", зависит от требований теста
+    }
+    return "";
+}

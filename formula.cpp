@@ -9,8 +9,8 @@
 
 using namespace std::literals;
 
-std::ostream& operator<<(std::ostream& output, const FormulaError& fe) {
-    return output << "#ARITHM!";
+std::ostream& operator<<(std::ostream& output, FormulaError fe) {
+    return output << fe.ToString();
 }
 
 namespace {
@@ -26,14 +26,36 @@ public:
         throw FormulaException(e.what());
     }
 
-    Value Evaluate() const override {
+    Value Evaluate(const SheetInterface& sheet) const override {
         try {
-            return ast_.Execute();  // Вычисляем через FormulaAST
+            // Передаем лямбду в AST
+            return ast_.Execute([&sheet](Position pos) -> double {
+                if (!pos.IsValid()) throw FormulaError(FormulaError::Category::Ref);
+                const auto* cell = sheet.GetCell(pos);
+                if (!cell) return 0.0; // Пустая ячейка равна нулю
 
+                auto val = cell->GetValue();
+                if (std::holds_alternative<double>(val)) {
+                    return std::get<double>(val);
+                }
+                else if (std::holds_alternative<std::string>(val)) {
+                    const std::string& str = std::get<std::string>(val);
+                    if (str.empty()) return 0.0;
+                    double res = 0;
+                    std::istringstream in(str);
+                    // Строгий парсинг числа
+                    if (!(in >> res >> std::ws) || !in.eof()) {
+                        throw FormulaError(FormulaError::Category::Value);
+                    }
+                    return res;
+                }
+                else {
+                    throw std::get<FormulaError>(val);
+                }
+                });
         }
-        catch (const FormulaError& error) {
-            // Ошибка вычисления (деление на 0) — возвращаем в варианте
-            return error;
+        catch (const FormulaError& err) {
+            return err;
         }
     }
 
@@ -41,6 +63,14 @@ public:
         std::ostringstream out;
         ast_.PrintFormula(out);
         return out.str();
+    }
+
+    std::vector<Position> GetReferencedCells() const override {
+        std::vector<Position> res;
+        for (auto pos : ast_.GetCells()) {
+            res.push_back(pos);
+        }
+        return res;
     }
 
 private:
