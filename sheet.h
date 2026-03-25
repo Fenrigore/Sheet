@@ -22,10 +22,8 @@ public:
     void PrintValues(std::ostream& output) const override;
     void PrintTexts(std::ostream& output) const override;
 
-	// Можете дополнить ваш класс нужными полями и методами
 
 private:
     class Impl;
     std::unique_ptr<Impl> impl_{};
-	// Можете дополнить ваш класс нужными полями и методами
 };

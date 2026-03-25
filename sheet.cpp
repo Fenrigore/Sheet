@@ -85,25 +85,7 @@ public:
         return size_;
     }
 
-    //=====================================================================
-    std::string EscapeString(const std::string& input) {
-        std::ostringstream oss;
-        for (char c : input) {
-            switch (c) {
-            case '\n': oss << "\\n"; break;  // Заменяем перенос на текст \n
-            case '\t': oss << "\\t"; break;  // Заменяем табуляцию на текст \t
-            case '\r': oss << "\\r"; break;
-            case '\\': oss << "\\\\"; break; // Экранируем сам слэш
-            default:   oss << c; break;
-            }
-        }
-        return oss.str();
-    }
-    //=====================================================================
-
     void PrintTexts(std::ostream& output)  {
-        std::ostringstream out_str_str{};
-
         //прохожу по строке
         for (int i = 0; i < size_.rows; ++i) {
             //по каждой ячейке в строке
@@ -111,20 +93,14 @@ public:
                 auto it = sheet_.find({ i,j });
                 if (it != sheet_.end()) {
                     output << it->second->GetText();
-                    out_str_str << it->second->GetText();
 
                 }
                 if (j != size_.cols - 1) {
                     output << '\t';
-                    out_str_str << '\t';
                 }
             }
             output << '\n';
-            out_str_str << '\n';
         }
-        std::string string = out_str_str.str();
-        std::string tabul = EscapeString(string);
-        //std::cout << '[' << tabul << ']';
     }
 
     struct ValuePrinter {
@@ -146,29 +122,20 @@ public:
     };
 
     void PrintValues(std::ostream& output)  {
-
-        std::ostringstream out_str_str{};
-
         for (int i = 0; i < size_.rows; ++i) {
             //по каждой ячейке в строке
             for (int j = 0; j < size_.cols; ++j) {
                 auto it = sheet_.find({ i,j });
                 if (it != sheet_.end()) {
                     output << std::visit(ValuePrinter{}, it->second->GetValue());
-                    out_str_str << std::visit(ValuePrinter{}, it->second->GetValue());
 
                 }
                 if (j != size_.cols - 1) {
                     output << '\t';
-                    out_str_str << '\t';
                 }
             }
             output << '\n';
-            out_str_str << '\n';
         }
-        std::string string = out_str_str.str();
-std::string tabul = EscapeString(string);
-//std::cout <<'['<< tabul << ']';
     }
 
 private: //методы

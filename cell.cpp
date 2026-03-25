@@ -62,7 +62,7 @@ public:
 	}
 
 	CellInterface::Value GetValue() const override {
-		return std::visit(ValueGetter{}, formula_->Evaluate());
+		return std::visit(ValueGetter{}, formula_->Evaluate(sheet_));
 	}
 
 private:
@@ -70,7 +70,9 @@ private:
 };
 
 // Реализуйте следующие методы
-Cell::Cell(): impl_(std::make_unique<EmptyImpl>()){}
+Cell::Cell(Sheet& sheet, Position pos): impl_(std::make_unique<EmptyImpl>())
+, sheet_(sheet)
+, position_(pos){}
 
 Cell::~Cell() = default;
 
@@ -95,4 +97,17 @@ Cell::Value Cell::GetValue() const {
 }
 std::string Cell::GetText() const {
 	return impl_->GetText();
+}
+
+std::vector<Position> Cell::GetReferencedCells() const
+{
+	std::vector<Position> positions{};
+	for (const auto cell : referenced_cells_) {
+		positions.push_back(cell->GetPosition());
+	}
+	return positions;
+}
+
+Position Cell::GetPosition() const {
+	return position_;
 }
