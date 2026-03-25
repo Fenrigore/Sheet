@@ -6,6 +6,7 @@
 #include <cassert>
 #include <cctype>
 #include <sstream>
+#include <cmath>
 
 using namespace std::literals;
 
@@ -28,42 +29,43 @@ public:
 
     Value Evaluate(const SheetInterface& sheet) const override {
         try {
-            // Вычисляем результат как double
             double result = ast_.Execute([&sheet](Position pos) -> double {
                 if (!pos.IsValid()) throw FormulaError(FormulaError::Category::Ref);
                 const auto* cell = sheet.GetCell(pos);
-                if (!cell) return 0.0;
+                if (!cell) return 0.0; // несуществующая ячейка → 0
 
                 auto val = cell->GetValue();
-                if (std::holds_alternative<double>(val)) {
-                    return std::get<double>(val);
-                }
-                else if (std::holds_alternative<std::string>(val)) {
-                    const std::string& str = std::get<std::string>(val);
-                    if (str.empty()) return 0.0;
-                    double res = 0;
-                    std::istringstream in(str);
-                    if (!(in >> res >> std::ws) || !in.eof()) {
-                        throw FormulaError(FormulaError::Category::Value);
+                return std::visit([&](const auto& v) -> double {
+                    using T = std::decay_t<decltype(v)>;
+                    if constexpr (std::is_same_v<T, double>) {
+                        return v;
                     }
-                    return res;
-                }
-                else {
-                    throw std::get<FormulaError>(val);
-                }
+                    else if constexpr (std::is_same_v<T, std::string>) {
+                        if (v.empty()) return 0.0; // пустая строка → 0
+                        double res;
+                        std::istringstream in(v);
+                        if (!(in >> res >> std::ws) || !in.eof()) {
+                            throw FormulaError(FormulaError::Category::Value);
+                        }
+                        return res;
+                    }
+                    else {
+                        throw v; // v – FormulaError
+                    }
+                    }, val);
                 });
 
-            // Проверяем результат на inf и NaN
             if (!std::isfinite(result)) {
                 return FormulaError(FormulaError::Category::Arithmetic);
             }
-
             return result;
         }
         catch (const FormulaError& err) {
             return err;
         }
     }
+
+
 
     std::string GetExpression() const override {
         std::ostringstream out;

@@ -18,9 +18,8 @@ void Sheet::SetCell(Position pos, std::string text) {
 const CellInterface* Sheet::GetCell(Position pos) const {
     if (!pos.IsValid()) throw InvalidPositionException("Invalid position");
     auto it = cells_.find(pos);
-    // Проверяем, существует ли ячейка и не пустая ли она
-    if (it != cells_.end() && !it->second->GetText().empty()) {
-        return it->second.get();
+    if (it != cells_.end()) {
+        return it->second.get();   // возвращаем даже пустую ячейку
     }
     return nullptr;
 }
@@ -28,9 +27,8 @@ const CellInterface* Sheet::GetCell(Position pos) const {
 CellInterface* Sheet::GetCell(Position pos) {
     if (!pos.IsValid()) throw InvalidPositionException("Invalid position");
     auto it = cells_.find(pos);
-    // Аналогичная проверка
-    if (it != cells_.end() && !it->second->GetText().empty()) {
-        return it->second.get();
+    if (it != cells_.end()) {
+        return it->second.get();   // возвращаем даже пустую ячейку
     }
     return nullptr;
 }
@@ -46,9 +44,8 @@ void Sheet::ClearCell(Position pos) {
     if (!pos.IsValid()) throw InvalidPositionException("Invalid position");
     auto it = cells_.find(pos);
     if (it != cells_.end()) {
-        it->second->Clear();
-        // Мы не удаляем пустую ячейку из словаря, чтобы не разорвать граф связей,
-        // метод GetPrintableSize() всё равно ее проигнорирует.
+        it->second->Clear();   // разрываем зависимости
+        cells_.erase(it);      // удаляем ячейку из словаря
     }
 }
 

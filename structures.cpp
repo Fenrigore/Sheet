@@ -94,7 +94,7 @@ std::string_view FormulaError::ToString() const {
     case Category::Value:
         return "#VALUE!";
     case Category::Arithmetic:
-        return "#DIV/0!"; // Или "#ARITHM!", зависит от требований теста
+        return "#ARITHM!"; // Или "#ARITHM!", зависит от требований теста
     }
     return "";
 }

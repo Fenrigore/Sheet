@@ -152,20 +152,26 @@ namespace {
 
     void TestFormulaReferences() {
         auto sheet = CreateSheet();
+        std::cout << "SheetCreated\n";
         auto evaluate = [&](std::string expr) {
             return std::get<double>(ParseFormula(std::move(expr))->Evaluate(*sheet));
             };
-
+        std::cout << "Evaluated\n";
         sheet->SetCell("A1"_pos, "1");
         ASSERT_EQUAL(evaluate("A1"), 1);
+        std::cout << "First assert\n";
         sheet->SetCell("A2"_pos, "2");
         ASSERT_EQUAL(evaluate("A1+A2"), 3);
+        std::cout << "Second assert\n";
 
         // Тест на нули:
         sheet->SetCell("B3"_pos, "");
         ASSERT_EQUAL(evaluate("A1+B3"), 1);  // Ячейка с пустым текстом
+        std::cout << "thrird assert\n";
         ASSERT_EQUAL(evaluate("A1+B1"), 1);  // Пустая ячейка
+        std::cout << "fourth assert\n";
         ASSERT_EQUAL(evaluate("A1+E4"), 1);  // Ячейка за пределами таблицы
+        std::cout << "last assert\n";
     }
 
     void TestFormulaExpressionFormatting() {
